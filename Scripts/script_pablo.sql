@@ -41,6 +41,11 @@ IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'MIGRACION_PAGO_VENTA_IN
     DROP PROCEDURE AMCGDD.MIGRACION_PAGO_VENTA_INMUEBLES;
 GO
 
+---------------------Limpiamos funciones---------------------
+
+IF EXISTS(SELECT [name] FROM sys.objects WHERE [name] = 'OBTENER_ID_MONEDA')
+DROP FUNCTION AMCGDD.OBTENER_ID_MONEDA
+GO
 
 
 ---------------------Limpiamos el esquema---------------------
@@ -141,6 +146,16 @@ ALTER TABLE AMCGDD.PAGO_VENTA
 ADD CONSTRAINT FK_MEDIO_PAGO_PAGO_VENTA
 FOREIGN KEY (PAGO_VENTA_MEDIO_DE_PAGO) REFERENCES AMCGDD.MEDIO_DE_PAGO;
 
+--/-------------------FUNCIONES----------------------------/--
+
+CREATE FUNCTION AMCGDD.OBTENER_ID_MONEDA (@nombreMoneda NVARCHAR(100))
+RETURNS INT
+AS
+BEGIN
+    DECLARE @monedaID INT;
+    SELECT @monedaID = moneda_codigo FROM AMCGDD.MONEDA WHERE MONEDA_NOMBRE = @nombreMoneda;
+    RETURN ISNULL(@monedaID, -1); -- Devuelve -1 si no se encuentra la moneda
+END;
 
 
 --/-------------------MIGRACION DE DATOS-------------------/--
@@ -205,6 +220,17 @@ EXEC AMCGDD.MIGRACION_MEDIOS_DE_PAGO;
 EXEC AMCGDD.MIGRACION_MONEDAS;
 EXEC AMCGDD.MIGRACION_VENTA_INMUEBLES;
 EXEC AMCGDD.MIGRACION_PAGO_VENTA_INMUEBLES;
+
+
+
+
+GO
+DECLARE @nombreMoneda NVARCHAR(100) = 'Moneda dolares';
+DECLARE @monedaID INT;
+
+SET @monedaID = AMCGDD.OBTENER_ID_MONEDA(@nombreMoneda);
+
+SELECT @monedaID AS MonedaID;
 
 /*
 SELECT * FROM AMCGDD.Anuncio
