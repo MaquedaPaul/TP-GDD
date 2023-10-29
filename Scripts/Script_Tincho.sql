@@ -45,8 +45,8 @@ GO
 CREATE SCHEMA AMCGDD;
 GO
 
-----------------Creamos las tablas sin PK ni FK, pero aclarando cuáles son PK y FK----------------
---CREACIÓN DE TABLAS---------------------
+----------------Creamos las tablas sin PK ni FK, pero aclarando cuÃ¡les son PK y FK----------------
+--CREACIÃ“N DE TABLAS---------------------
 
 CREATE TABLE AMCGDD.Alquiler(
 	alquiler_id NUMERIC(19,0),
@@ -127,7 +127,7 @@ ALTER TABLE AMCGDD.Pago_alquiler
 ADD CONSTRAINT fk_medio_pago_pago
 FOREIGN KEY (pago_medio_pago) REFERENCES AMCGDD.Medio_de_pago
 
----------------------Migración de datos---------------------
+---------------------MigraciÃ³n de datos---------------------
 
 IF EXISTS(SELECT name FROM sys.procedures WHERE name = 'migracion_estado_alquiler')
     DROP PROCEDURE AMCGDD.migracion_estado_alquiler;
