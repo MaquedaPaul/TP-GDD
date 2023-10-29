@@ -158,6 +158,50 @@ END;
 
 /*============================== FIN FUNCIONES DE FORMATO ==============================*/
 
+/*============================== FUNCIONES DE OBTENCION ==============================*/
+GO
+CREATE FUNCTION AMCGDD.ID_INQUILINO(@dni NUMERIC(19,0))
+RETURNS NUMERIC(19,0)
+AS
+BEGIN
+	RETURN (
+		SELECT TOP 1 inquilino_id FROM
+		AMCGDD.INQUILINOS i
+		JOIN AMCGDD.USUARIOS  u
+		ON i.inquilino_usuario = u.usuario_id
+		WHERE u.usuario_dni = @dni
+	);
+END
+
+GO
+CREATE FUNCTION AMCGDD.ID_COMPRADOR(@dni NUMERIC(19,0))
+RETURNS NUMERIC(19,0)
+AS
+BEGIN
+	RETURN (
+		SELECT TOP 1 comprador_id FROM
+		AMCGDD.COMPRADORES c
+		JOIN AMCGDD.USUARIOS  u
+		ON c.comprador_usuario = u.usuario_id
+		WHERE u.usuario_dni = @dni
+	);
+END
+
+GO
+CREATE FUNCTION AMCGDD.ID_PROPIETARIO(@dni NUMERIC(19,0))
+RETURNS NUMERIC(19,0)
+AS
+BEGIN
+	RETURN (
+		SELECT TOP 1 propietario_id FROM
+		AMCGDD.PROPIETARIOS p
+		JOIN AMCGDD.USUARIOS  u
+		ON p.propietario_usuario = u.usuario_id
+		WHERE u.usuario_dni = @dni
+	);
+END
+
+/*============================== FIN FUNCIONES DE OBTENCION ==============================*/
 
 /*============================== MIGRACIONES ==============================*/
 
@@ -407,4 +451,3 @@ USE GD2C2023
 EXEC AMCGDD.MIGRACION_USUARIOS
 EXEC AMCGDD.MIGRACION_SUBTIPOS_USUARIO
 EXEC AMCGDD.MIGRACION_ANUNCIOS
-
