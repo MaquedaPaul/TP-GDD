@@ -642,10 +642,17 @@ AS
 		INSERT INTO AMCGDD.Alquiler(Alquiler_id, alquiler_anuncio, alquiler_fecha_inicio, alquiler_fecha_fin, alquiler_duracion, 
 			alquiler_deposito, alquiler_comision, alquiler_gastos_averiguaciones, alquiler_inquilino, alquiler_estado)
 		SELECT DISTINCT ALQUILER_CODIGO, ANUNCIO_CODIGO, ALQUILER_FECHA_INICIO, ALQUILER_FECHA_FIN, ALQUILER_CANT_PERIODOS,
-			ALQUILER_DEPOSITO, ALQUILER_COMISION, ALQUILER_GASTOS_AVERIGUA, AMCGDD.ID_INQUILINO(INQUILINO_DNI), estado_id 
-		FROM gd_esquema.Maestra 
-		JOIN AMCGDD.Estado_alquiler ON ALQUILER_ESTADO = estado_nombre
-		WHERE ALQUILER_CODIGO IS NOT NULL
+            		ALQUILER_DEPOSITO, ALQUILER_COMISION, ALQUILER_GASTOS_AVERIGUA, inquilino_usuario, estado_id
+        	FROM gd_esquema.Maestra 
+        	JOIN AMCGDD.USUARIOS u
+       		ON u.usuario_dni = INQUILINO_DNI
+            		AND    u.usuario_nombre = RTRIM(LTRIM(UPPER(INQUILINO_NOMBRE)))
+            		AND    u.usuario_apellido = RTRIM(LTRIM(UPPER(INQUILINO_APELLIDO)))
+        	JOIN AMCGDD.INQUILINOS i
+        	ON i.inquilino_usuario = u.usuario_id
+        	JOIN AMCGDD.ESTADO_ALQUILER e
+        	ON e.estado_nombre = ALQUILER_ESTADO
+        	WHERE ALQUILER_CODIGO IS NOT NULL
 	END
 
 GO
@@ -654,8 +661,11 @@ AS
 	BEGIN
 		PRINT '**MIGRACION** Importe Alquiler'
 		INSERT INTO AMCGDD.Importe_alquiler(Importe_alquiler, importe_periodo_inicio, importe_periodo_fin, importe_precio, importe_moneda)
-		SELECT ALQUILER_CODIGO, DETALLE_ALQ_NRO_PERIODO_INI, DETALLE_ALQ_NRO_PERIODO_FIN, DETALLE_ALQ_PRECIO, AMCGDD.OBTENER_ID_MONEDA(ANUNCIO_MONEDA)
-		FROM gd_esquema.Maestra 
+		SELECT DISTINCT ALQUILER_CODIGO, DETALLE_ALQ_NRO_PERIODO_INI, DETALLE_ALQ_NRO_PERIODO_FIN, DETALLE_ALQ_PRECIO, m.MONEDA_CODIGO
+        	FROM gd_esquema.Maestra g
+        	JOIN AMCGDD.MONEDA m
+        	ON g.ANUNCIO_MONEDA = m.MONEDA_NOMBRE
+        	WHERE DETALLE_ALQ_NRO_PERIODO_INI is not null 
 	END
 
 GO
@@ -663,11 +673,13 @@ CREATE PROCEDURE AMCGDD.MIGRACION_PAGO_ALQUILER
 AS
 	BEGIN
 		PRINT '**MIGRACION** Pago Alquiler'
-			INSERT INTO AMCGDD.Pago_alquiler(pago_alquiler, pago_codigo, pago_fecha, pago_inicio_periodo, pago_fin_periodo, pago_alquiler_descripcion,
-				pago_nro_periodo, pago_medio_pago, pago_importe, pago_fecha_vencimiento)
-			SELECT ALQUILER_CODIGO, PAGO_ALQUILER_CODIGO, PAGO_ALQUILER_FECHA, PAGO_ALQUILER_FEC_INI, PAGO_ALQUILER_FEC_FIN, PAGO_ALQUILER_DESC,
-				PAGO_ALQUILER_NRO_PERIODO, PAGO_ALQUILER_MEDIO_PAGO, PAGO_ALQUILER_IMPORTE, PAGO_ALQUILER_FECHA_VENCIMIENTO 
-			FROM gd_esquema.Maestra
+		INSERT INTO AMCGDD.Pago_alquiler(pago_alquiler, pago_codigo, pago_fecha, pago_inicio_periodo, pago_fin_periodo, pago_alquiler_descripcion,
+			pago_nro_periodo, pago_medio_pago, pago_importe, pago_fecha_vencimiento)
+		SELECT ALQUILER_CODIGO, PAGO_ALQUILER_CODIGO, PAGO_ALQUILER_FECHA, 
+			PAGO_ALQUILER_FEC_INI, PAGO_ALQUILER_FEC_FIN, SUBSTRING(PAGO_ALQUILER_DESC, 23, LEN(PAGO_ALQUILER_DESC) - 22),
+                	PAGO_ALQUILER_NRO_PERIODO, PAGO_ALQUILER_MEDIO_PAGO, PAGO_ALQUILER_IMPORTE, PAGO_ALQUILER_FECHA_VENCIMIENTO 
+            	FROM gd_esquema.Maestra
+            	WHERE PAGO_ALQUILER_CODIGO IS NOT NULL
 	END
 GO
 
@@ -676,16 +688,10 @@ GO
 EXEC AMCGDD.MIGRACION_USUARIOS
 EXEC AMCGDD.MIGRACION_SUBTIPOS_USUARIO
 EXEC AMCGDD.MIGRACION_ANUNCIOS
-EXEC AMCGDD.MIGRACION_ESTADO_ALQUILER
 EXEC AMCGDD.MIGRACION_MONEDAS
 EXEC AMCGDD.MIGRACION_MEDIOS_DE_PAGO
+EXEC AMCGDD.MIGRACION_ESTADO_ALQUILER
 EXEC AMCGDD.MIGRACION_ALQUILER
 EXEC AMCGDD.MIGRACION_IMPORTE_ALQUILER
 EXEC AMCGDD.MIGRACION_PAGO_ALQUILER
-
-
-SELECT AMCGDD.ID_INQUILINO(u.usuario_dni), usuario_dni, inquilino_id FROM AMCGDD.USUARIOS u
-JOIN AMCGDD.INQUILINOS i ON u.usuario_id = i.inquilino_usuario
-
-SELECT * FROM AMCGDD.USUARIOS
 
