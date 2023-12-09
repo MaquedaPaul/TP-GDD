@@ -238,16 +238,24 @@ END
 DROP FUNCTION AMCGDD.SIGUE_VIGENTE
 
 
+-- cantidad m2
+-- precio
+-- localidad
+-- tipo inmueble
+-- tiempo
+
 GO
 CREATE PROCEDURE AMCGDD.MIGRACION_BI_HECHOS_PAGO_VENTA
 AS
 BEGIN
 	SELECT 
-		pv.PAGO_VENTA_IMPORTE AS IMPORTE,
-		v.VENTA_ANUNCIO AS ANUNCIO,
+		v.VENTA_PRECIO AS IMPORTE_VENTAS,
 		ag.agente_sucursal AS SUCURSAL,
 		dm.MONEDA_NOMBRE AS MONEDA,
-		dt.TIEMPO_ID AS TIEMPO
+		dt.ANIO,
+		dt.MES,
+
+		--dt.TIEMPO_ID AS TIEMPO
 	FROM AMCGDD.PAGO_VENTA pv
 	JOIN AMCGDD.VENTA_INMUEBLE v
 		ON pv.PAGO_VENTA_VENTA = v.VENTA_CODIGO 
@@ -262,7 +270,8 @@ BEGIN
 	JOIN AMCGDD.BI_DIMENSION_TIEMPO dt
 		ON YEAR(v.VENTA_FECHA) = dt.ANIO
 		AND MONTH(v.VENTA_FECHA) = dt.MES
-
+	JOIN AMCGDD.BI_
+	--GROUP BY ag.agente_sucursal, dm.MONEDA_NOMBRE, dt.ANIO, dt.MES
 END
 
 GO
@@ -270,7 +279,11 @@ CREATE PROCEDURE AMCGDD.MIGRACION_BI_HECHOS_PAGO_ALQUILER
 AS
 BEGIN
 	
-	SELECT pago_importe AS PAGO_IMPORTE, ag.agente_sucursal SUCURSAL, dm.MONEDA_NOMBRE MONEDA, alquiler_anuncio ANUNCIO, dt.ANIO ANIO, dt.MES MES,dt.cuatrimestre CUATRI, *
+	SELECT pago_importe AS PAGO_IMPORTE_ALQUILER, ag.agente_sucursal SUCURSAL, dm.MONEDA_NOMBRE MONEDA, 
+		dt.ANIO, dt.MES, pago_alquiler, ea.estado_nombre,
+		 1111 AS 'IMPORTE SIGUIENTE PERIODO',
+		1 AS 'HUBO AUMENTO'
+	--dt.TIEMPO_ID
 	FROM AMCGDD.PAGO_ALQUILER pa
 	JOIN AMCGDD.ALQUILER a
 		ON pa.pago_alquiler = a.alquiler_id
@@ -289,7 +302,9 @@ BEGIN
 	JOIN AMCGDD.BI_DIMENSION_TIEMPO dt
 		ON YEAR(pa.pago_fecha) = dt.ANIO
 		AND MONTH(pa.pago_fecha) = dt.MES
-		
+	JOIN AMCGDD.ESTADO_ALQUILER ea
+		ON alquiler_estado = ea.estado_id
+	ORDER BY estado_nombre, pago_alquiler, ANIO, MES 
 END
 
 SELECT * FROM AMCGDD.IMPORTE_ALQUILER
@@ -301,3 +316,75 @@ SELECT * FROM AMCGDD.PAGO_ALQUILER
 
 SELECT * FROM AMCGDD.BI_DIMENSION_TIEMPO a
 ORDER BY a.anio, a.mes, a.cuatrimestre
+
+
+SELECT SUM(pago_importe) AS PAGO_IMPORTE_ALQUILER, ag.agente_sucursal SUCURSAL, dm.MONEDA_NOMBRE MONEDA, 
+		dt.ANIO, dt.MES
+	--dt.TIEMPO_ID
+	FROM AMCGDD.PAGO_ALQUILER pa
+	JOIN AMCGDD.ALQUILER a
+		ON pa.pago_alquiler = a.alquiler_id
+	JOIN AMCGDD.ANUNCIOS an
+		ON a.alquiler_anuncio = an.anuncio_codigo
+	JOIN AMCGDD.AGENTES ag
+		ON an.anuncio_agente = ag.agente_id
+	JOIN AMCGDD.IMPORTE_ALQUILER ia
+		ON  a.alquiler_id = ia.importe_alquiler 
+		AND pa.pago_nro_periodo >= ia.importe_periodo_inicio 
+		AND pa.pago_nro_periodo < ia.importe_periodo_fin
+	JOIN AMCGDD.MONEDA m
+		ON ia.importe_moneda = m.MONEDA_CODIGO
+	JOIN AMCGDD.BI_DIMENSION_TIPO_MONEDA dm
+		ON m.MONEDA_NOMBRE = dm.MONEDA_NOMBRE
+	JOIN AMCGDD.BI_DIMENSION_TIEMPO dt
+		ON YEAR(pa.pago_fecha) = dt.ANIO
+		AND MONTH(pa.pago_fecha) = dt.MES
+	GROUP BY dm.MONEDA_NOMBRE, ag.agente_sucursal, dt.ANIO, dt.MES
+	ORDER BY ANIO, MES
+
+SELECT ALQUILER_ESTADO, COUNT(*) 
+FROM gd_esquema.Maestra 
+WHERE ALQUILER_ESTADO IS NOT NULL
+GROUP BY ALQUILER_ESTADO
+
+
+SELECT pago_importe AS PAGO_IMPORTE_ALQUILER, ag.agente_sucursal SUCURSAL, dm.MONEDA_NOMBRE MONEDA, 
+		dt.ANIO, dt.MES, pago_alquiler, ea.estado_nombre,
+		 1111 AS 'IMPORTE SIGUIENTE PERIODO',
+		1 AS 'HUBO AUMENTO'
+	--dt.TIEMPO_ID
+	FROM AMCGDD.PAGO_ALQUILER pa
+	JOIN AMCGDD.ALQUILER a
+		ON pa.pago_alquiler = a.alquiler_id
+	JOIN AMCGDD.ANUNCIOS an
+		ON a.alquiler_anuncio = an.anuncio_codigo
+	JOIN AMCGDD.AGENTES ag
+		ON an.anuncio_agente = ag.agente_id
+	LEFT JOIN AMCGDD.IMPORTE_ALQUILER ia
+		ON  a.alquiler_id = ia.importe_alquiler 
+		AND pa.pago_nro_periodo >= ia.importe_periodo_inicio 
+		AND pa.pago_nro_periodo < ia.importe_periodo_fin
+	JOIN AMCGDD.MONEDA m
+		ON ia.importe_moneda = m.MONEDA_CODIGO
+	JOIN AMCGDD.BI_DIMENSION_TIPO_MONEDA dm
+		ON m.MONEDA_NOMBRE = dm.MONEDA_NOMBRE
+	JOIN AMCGDD.BI_DIMENSION_TIEMPO dt
+		ON YEAR(pa.pago_fecha) = dt.ANIO
+		AND MONTH(pa.pago_fecha) = dt.MES
+	JOIN AMCGDD.ESTADO_ALQUILER ea
+		ON alquiler_estado = ea.estado_id
+	ORDER BY estado_nombre
+
+SELECT a.pago_alquiler, COUNT(*) FROM AMCGDD.PAGO_ALQUILER a GROUP BY a.pago_alquiler
+SELECT a.alquiler_estado, COUNT(*) FROM AMCGDD.PAGO_ALQUILER pa JOIN AMCGDD.ALQUILER a ON pa.pago_alquiler = a.alquiler_id GROUP BY a.alquiler_estado
+
+
+
+
+
+
+SELECT alquiler_estado, COUNT(alquiler_estado) FROM AMCGDD.IMPORTE_ALQUILER JOIN AMCGDD.ALQUILER ON importe_alquiler = alquiler_id GROUP BY alquiler_estado
+
+SELECT * FROM AMCGDD.PAGO_ALQUILER JOIN AMCGDD.ALQUILER ON pago_alquiler = alquiler_id WHERE alquiler_estado = 3
+
+SELECT m.ANUNCIO_TIPO_OPERACION, ALQUILER_ESTADO, COUNT(*) FROM gd_esquema.Maestra m WHERE ALQUILER_ESTADO IS NOT NULL GROUP BY m.ANUNCIO_TIPO_OPERACION, ALQUILER_ESTADO
