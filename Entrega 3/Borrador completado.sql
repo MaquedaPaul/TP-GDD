@@ -69,9 +69,6 @@ IF EXISTS(SELECT [name] FROM sys.objects WHERE [name] = 'SUMAMONTO')
 DROP FUNCTION AMCGDD.SUMAMONTO
 GO
 
-
-
-
 -----------LIMPIAMOS PROCEDIMIENTOS
 IF EXISTS(SELECT [name] FROM sys.procedures WHERE [name] = 'MIGRACION_DIMENSION_TIPO_MONEDA')
 	DROP PROCEDURE AMCGDD.MIGRACION_DIMENSION_TIPO_MONEDA
@@ -128,11 +125,9 @@ GO
 IF EXISTS (SELECT [name] FROM sys.views WHERE [name] = 'porcentajeOperacionesConcretadasPorSucursal')
     DROP VIEW AMCGDD.porcentajeOperacionesConcretadasPorSucursal
 GO
-
-
-
-
-
+IF EXISTS (SELECT [name] FROM sys.views WHERE [name] = 'montoTotalDeCierreDeContratosPorOperacion')
+    DROP VIEW AMCGDD.montoTotalDeCierreDeContratosPorOperacion
+GO
 
 ----CREACION TABLAS
 
@@ -608,6 +603,7 @@ GO
 CREATE PROCEDURE AMCGDD.MIGRACION_FACT_ANUNCIOS
 AS
 BEGIN 
+	PRINT 'MIGRACION A LA TABLA DE HECHOS DE ANUNCIOS' 
 	INSERT INTO AMCGDD.BI_FACT_ANUNCIOS
 	SELECT 
 	TIEMPO_ID, 
