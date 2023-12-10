@@ -713,6 +713,26 @@ BEGIN
 	ORDER BY TIEMPO_ID
 END
 
+CREATE PROCEDURE AMCGDD.MIGRACION_BI_HECHOS_ALQUILERES
+AS
+BEGIN
+INSERT INTO AMCGDD.BI_HECHOS_ALQUILERES
+SELECT AMCGDD.RANGOETARIO(u.usuario_fecha_nac) AS RANGO_ETARIO, dt.TIEMPO_ID, im.BARRIO_ID, COUNT(im.BARRIO_ID) AS CANTIDAD_DE_ALQUILERES
+FROM AMCGDD.ALQUILER a
+JOIN AMCGDD.INQUILINOS i
+	ON a.alquiler_inquilino = i.inquilino_id
+JOIN AMCGDD.USUARIOS u
+	ON i.inquilino_usuario = u.usuario_id
+JOIN AMCGDD.BI_DIMENSION_TIEMPO dt
+	ON YEAR(alquiler_fecha_inicio) = dt.ANIO
+	AND MONTH(alquiler_fecha_inicio) = dt.MES
+JOIN AMCGDD.ANUNCIOS an
+	ON a.alquiler_anuncio = an.anuncio_codigo
+JOIN AMCGDD.INMUEBLE im
+	ON an.anuncio_inmueble = im.INMUEBLE_ID
+GROUP BY AMCGDD.RANGOETARIO(u.usuario_fecha_nac), im.BARRIO_ID, dt.TIEMPO_ID
+ORDER BY AMCGDD.RANGOETARIO(u.usuario_fecha_nac), dt.TIEMPO_ID, COUNT(im.BARRIO_ID) DESC
+END
 
 ---////VISTA 1////
 GO
@@ -732,10 +752,24 @@ JOIN AMCGDD.BI_DIMENSION_TIEMPO dt ON fa.TIEMPO_ID = dt.TIEMPO_ID
 GROUP BY ANIO, CUATRIMESTRE, TIPO_OPERACION_ID, TIPO_INMUEBLE_ID, RANGO_M2_ID
 GO
 ---////VISTA 3////  ---> SE TIENE QUE HACER CON LA DE HECHOS DE ALQUILERES
+/*
+
+ Los 5 barrios más elegidos para alquilar en función del rango etario de los inquilinos para cada cuatrimestre/año. 
+ Se calcula en función de los alquileres dados de alta en dicho periodo
+*/
+
+-- BARRIO
+-- RANGO ETARIO INQUILINO
+-- TIEMPO ID (FECHA DADO DE ALTA)
+
 
 
 ---////VISTA 4//// ---> SE TIENE QUE HACER CON LA DE HECHOS DE ALQUILERES
+/*Porcentaje de incumplimiento de pagos de alquileres en término por cada mes/año. 
+Se calcula en función de las fechas de pago y fecha de vencimiento del mismo. El porcentaje es en función del total de pagos en dicho periodo
+*/
 
+--  
 
 ---////VISTA 5//// ---> SE TIENE QUE HACER CON LA DE HECHOS DE ALQUILERES
 /*
